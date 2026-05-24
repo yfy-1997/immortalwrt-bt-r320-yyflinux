@@ -18,6 +18,11 @@
 	aliases {
 		serial0 = &uart0;
 		label-mac-device = &gmac0;
+		// 定义不同系统状态下对应的 LED 指示灯（用于 U-Boot 和内核引导阶段）
+		led-boot = &status_red_led;      // 启动时亮红灯
+		led-failsafe = &status_red_led;  // 安全/故障模式亮红灯
+		led-running = &status_green_led; // 正常运行亮绿灯
+		led-upgrade = &status_blue_led;  // 系统升级时亮蓝灯
 	};
 
   // 存放由 Bootloader（如 U-Boot）传递给内核的参数
@@ -55,14 +60,32 @@
 	gpio-leds {
 		compatible = "gpio-leds";
 
-    // 2.4G WiFi 指示灯 LED 颜色为绿色
+         // 红色状态灯
+         status_red_led: led-0 {
+             label = "red:status";
+             gpios = <&pio 10 GPIO_ACTIVE_LOW>; // 绑定到 GPIO 10 号引脚
+         };
+
+         // 绿色状态灯
+         status_green_led: led-1 {
+             label = "green:status";
+             gpios = <&pio 11 GPIO_ACTIVE_LOW>; // 绑定到 GPIO 11 号引脚
+         };
+
+         // 蓝色状态灯
+         status_blue_led: led-2 {
+             label = "blue:status";
+             gpios = <&pio 12 GPIO_ACTIVE_LOW>; // 绑定到 GPIO 12 号引脚
+	     };
+
+        // 2.4G WiFi 指示灯 LED 颜色为绿色
 		wlan2g_led: led-0 {
 			function = LED_FUNCTION_WLAN_2GHZ;
 			color = <LED_COLOR_ID_GREEN>;
 			gpios = <&pio 34 GPIO_ACTIVE_LOW>;
 		};
 
-    // 5G WiFi 指示灯 LED 颜色为绿色
+        // 5G WiFi 指示灯 LED 颜色为绿色
 		wlan5g_led: led-1 {
 			function = LED_FUNCTION_WLAN_5GHZ;
 			color = <LED_COLOR_ID_GREEN>;
