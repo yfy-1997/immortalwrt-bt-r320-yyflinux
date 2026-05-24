@@ -1,97 +1,114 @@
 // SPDX-License-Identifier: GPL-2.0-or-later OR MIT
-
+// 声明设备树版本，并引入 GPIO、输入子系统、LED 通用定义以及 MT7981 芯片的基础定义
 /dts-v1/;
 #include <dt-bindings/gpio/gpio.h>
 #include <dt-bindings/input/input.h>
 #include <dt-bindings/leds/common.h>
-
 #include "mt7981.dtsi"
 
 / {
+	// 定义设备的具体型号名称和兼容性（告诉内核它兼容 MT7981 平台）
 	model = "Globitel BT-R320";
 	compatible = "bt,r320-emmc", "mediatek,mt7981";
 
 	aliases {
+		// 定义串口0的别名，通常用于控制台输出
 		serial0 = &uart0;
-		led-boot = &status_red_led;
-		led-failsafe = &status_red_led;
-		led-running = &status_green_led;
-		led-upgrade = &status_blue_led;
+		// 定义不同系统状态下对应的 LED 指示灯（用于 U-Boot 和内核引导阶段）
+		led-boot = &status_red_led;      // 启动时亮红灯
+		led-failsafe = &status_red_led;  // 安全/故障模式亮红灯
+		led-running = &status_green_led; // 正常运行亮绿灯
+		led-upgrade = &status_blue_led;  // 系统升级时亮蓝灯
 	};
 
 	chosen {
+		// 传递给内核的启动参数：指定根文件系统分区名为 rootfs，并等待设备就绪
 		bootargs = "root=PARTLABEL=rootfs rootwait rootfstype=squashfs overlayfs=f2fs";
+		// 指定内核标准输出路径为串口0，波特率为 115200
 		stdout-path = "serial0:115200n8";
 	};
 
+	// 定义内存区域：起始地址 0x40000000，大小为 0x20000000（即 512MB）
 	memory@40000000 {
 		reg = <0 0x40000000 0 0x20000000>;
 	};
 
+	// 定义 GPIO 按键（物理按钮）
 	gpio-keys {
 		compatible = "gpio-keys";
 
+		// MESH 按键
 		button-mesh {
 			label = "mesh";
 			linux,code = <BTN_9>;
 			linux,input-type = <EV_SW>;
-			gpios = <&pio 0 GPIO_ACTIVE_LOW>;
+			gpios = <&pio 0 GPIO_ACTIVE_LOW>; // 绑定到 GPIO 0 号引脚，低电平触发
 		};
 
+		// RESET 重置按键
 		button-reset {
 			label = "reset";
 			linux,code = <KEY_RESTART>;
-			gpios = <&pio 1 GPIO_ACTIVE_LOW>;
+			gpios = <&pio 1 GPIO_ACTIVE_LOW>; // 绑定到 GPIO 1 号引脚，低电平触发
 		};
 	};
 
+	// 定义 GPIO 控制的 LED 指示灯
 	gpio-leds {
 		compatible = "gpio-leds";
 
+                // 红色状态灯
                 status_red_led: led-0 {
                         label = "red:status";
-                        gpios = <&pio 10 GPIO_ACTIVE_LOW>;
+                        gpios = <&pio 10 GPIO_ACTIVE_LOW>; // 绑定到 GPIO 10 号引脚
                 };
 
+                // 绿色状态灯
                 status_green_led: led-1 {
                         label = "green:status";
-                        gpios = <&pio 11 GPIO_ACTIVE_LOW>;
+                        gpios = <&pio 11 GPIO_ACTIVE_LOW>; // 绑定到 GPIO 11 号引脚
                 };
 
+                // 蓝色状态灯
                 status_blue_led: led-2 {
                         label = "blue:status";
-                        gpios = <&pio 12 GPIO_ACTIVE_LOW>;
+                        gpios = <&pio 12 GPIO_ACTIVE_LOW>; // 绑定到 GPIO 12 号引脚
 		};
+				// 2.4G WiFi 指示灯
 				led-3 {
 					function = LED_FUNCTION_WLAN_2GHZ;
 					color = <LED_COLOR_ID_GREEN>;
-					gpios = <&pio 34 GPIO_ACTIVE_LOW>;
+					gpios = <&pio 34 GPIO_ACTIVE_LOW>; // 绑定到 GPIO 34 号引脚
 				};
 		
+				// 5G WiFi 指示灯
 				led-4 {
 					function = LED_FUNCTION_WLAN_5GHZ;
 					color = <LED_COLOR_ID_GREEN>;
-					gpios = <&pio 35 GPIO_ACTIVE_LOW>;
+					gpios = <&pio 35 GPIO_ACTIVE_LOW>; // 绑定到 GPIO 35 号引脚
 				};
 
 	};
 };
 
+// 配置以太网控制器
 &eth {
-	status = "okay";
+	status = "okay"; // 启用以太网控制器
 
+	// 配置 GMAC0（通常用于连接 2.5G WAN 口或 SFP）
 	gmac0: mac@0 {
 		compatible = "mediatek,eth-mac";
 		reg = <0>;
-		phy-mode = "2500base-x";
+		phy-mode = "2500base-x"; // 设置为 2.5G 速率模式
 
 		fixed-link {
-			speed = <2500>;
+			speed = <2500>; // 固定速率 2500Mbps
 			full-duplex;
 			pause;
 		};
 	};
 	
+	// 配置 GMAC1（通常用于连接内部交换机）
 	gmac1: mac@1 {
 		compatible = "mediatek,eth-mac";
 		reg = <1>;
@@ -104,46 +121,47 @@
 		};
 	};
 
-
-
+	// 定义 MDIO 总线，用于管理 PHY 和交换机芯片
 	mdio: mdio-bus {
 		#address-cells = <1>;
 		#size-cells = <0>;
 
-
+		// 配置 MT7531 交换机芯片
 		switch@0 {
 			compatible = "mediatek,mt7531";
 			reg = <31>;
-			reset-gpios = <&pio 39 0>;
+			reset-gpios = <&pio 39 0>; // 交换机复位引脚绑定到 GPIO 39
 
 			ports {
 				#address-cells = <1>;
 				#size-cells = <0>;
 
+				// 交换机物理端口定义
 				port@1 {
 					reg = <1>;
-					label = "lan1";
+					label = "lan1"; // 定义交换机 1 号端口为物理 LAN1 口
 				};
 
 				port@2 {
 					reg = <2>;
-					label = "lan2";
+					label = "lan2"; // 定义交换机 2 号端口为物理 LAN2 口
 				};
 
 				port@3 {
 					reg = <3>;
-					label = "lan3";
+					label = "lan3"; // 定义交换机 3 号端口为物理 LAN3 口
 				};
 
 				port@4 {
 					reg = <4>;
-					label = "wan";
+					label = "wan";  // 定义交换机 4 号端口为物理 WAN 口
 				};
 				
+				// 定义连接到 CPU 的内部端口
 				port@6 {
 					reg = <6>;
 					label = "cpu";
-					ethernet = <&gmac0>;
+					ethernet = <&gmac0>; // 绑定到 GMAC0
 					phy-mode = "2500base-x";
 
 					fixed-link {
@@ -157,17 +175,18 @@
 	};
 };
 
+// 配置 eMMC 存储控制器
 &mmc0 {
-	bus-width = <8>;
-	cap-mmc-highspeed;
-	max-frequency = <52000000>;
-	no-sd;
-	no-sdio;
-	non-removable;
+	bus-width = <8>; // 8位数据总线宽度
+	cap-mmc-highspeed; // 支持 MMC 高速模式
+	max-frequency = <52000000>; // 最大频率 52MHz
+	no-sd; // 不支持 SD 卡
+	no-sdio; // 不支持 SDIO
+	non-removable; // 不可移动设备（板载 eMMC）
 	pinctrl-names = "default", "state_uhs";
 	pinctrl-0 = <&mmc0_pins_default>;
 	pinctrl-1 = <&mmc0_pins_uhs>;
-	vmmc-supply = <&reg_3p3v>;
+	vmmc-supply = <&reg_3p3v>; // 供电电压 3.3V
 	status = "okay";
 
 	card@0 {
@@ -178,6 +197,7 @@
 			compatible = "block-device";
 
 			partitions {
+				// 定义 factory 分区（用于存放出厂校准数据和 MAC 地址）
 				block-partition-factory {
 					partname = "factory";
 
@@ -186,13 +206,15 @@
 						#address-cells = <1>;
 						#size-cells = <1>;
 
+						// 读取 eeprom 数据（用于 WiFi 校准）
 						eeprom_factory_0: eeprom@0 {
-							reg = <0x0 0x1000>;
+							reg = <0x0 0x1000>; // 偏移量 0x0，大小 0x1000
 						};
 
+						// 读取基础 MAC 地址
 						macaddr_factory_4: macaddr@4 {
 							compatible = "mac-base";
-							reg = <0x4 0x6>;
+							reg = <0x4 0x6>; // 偏移量 0x4，大小 6 字节
 							#nvmem-cell-cells = <1>;
 						};
 					};
@@ -202,6 +224,7 @@
 	};
 };
 
+// 配置 GPIO 引脚复用
 &pio {
 	mmc0_pins_default: mmc0-pins-default {
 		mux {
@@ -218,30 +241,36 @@
 	};
 };
 
+// 启用串口0
 &uart0 {
 	status = "okay";
 };
 
+// 启用硬件看门狗（用于系统死机时自动重启）
 &watchdog {
 	status = "okay";
 };
 
+// 配置 WiFi 模块
 &wifi {
-	nvmem-cells = <&eeprom_factory_0>;
+	nvmem-cells = <&eeprom_factory_0>; // 从 factory 分区读取 eeprom 校准数据
 	nvmem-cell-names = "eeprom";
 	status = "okay";
 
 	band@1 {
 		reg = <1>;
+		// 从 factory 分区的 macaddr@4 读取 MAC 地址，并基于此偏移 1 个地址
 		nvmem-cells = <&macaddr_factory_4 1>;
 		nvmem-cell-names = "mac-address";
 	};
 };
 
+// 启用 USB PHY（物理层）
 &usb_phy {
 	status = "okay";
 };
 
+// 启用 xHCI 控制器（即开启 USB 3.0 接口功能）
 &xhci {
 	status = "okay";
 };
