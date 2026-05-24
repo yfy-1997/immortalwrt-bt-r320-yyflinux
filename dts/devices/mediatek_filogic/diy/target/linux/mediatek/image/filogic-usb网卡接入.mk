@@ -16,6 +16,17 @@ define Device/bt_r320
            kmod-usb3 kmod-mmc kmod-fs-f2fs blockdev automount \	# USB 3.0 接口驱动、eMMC 存储控制器、F2FS 闪存文件系统、块设备工具及自动挂载
            luci-proto-qmi luci-proto-ncm	# LuCI 网页后台的 QMI 和 NCM 蜂窝网络协议配置界面插件
 
+  # --- 以下是 eMMC 引导文件生成配置 ---
+  # 声明编译后需要输出的 eMMC 引导相关文件
+  ARTIFACTS := emmc-gpt.bin emmc-preloader.bin emmc-bl31-uboot.fip
+  # 生成 eMMC 分区表文件 (GPT)
+  ARTIFACT/emmc-gpt.bin := mt798x-gpt emmc
+  # 生成 eMMC 硬件预加载程序 (BL2)，注意这里要根据你路由器的实际内存颗粒填写（如 emmc-ddr3 或 emmc-ddr4）
+  ARTIFACT/emmc-preloader.bin := mt7981-bl2 emmc-ddr3
+  # 生成 eMMC 版本的 U-Boot 引导程序，设备名必须与 TARGET_DEVICES 里的名字一致
+  ARTIFACT/emmc-bl31-uboot.fip := mt7981-bl31-uboot bt_r320
+  # -----------------------------------
+
   # 定义常规内核（Kernel）的生成与打包方式
   # kernel-bin: 提取原始内核 -> lzma: 使用 lzma 算法压缩 -> fit: 生成 FIT 格式镜像并打包对应的 dtb 设备树文件
   KERNEL := kernel-bin | lzma | fit lzma $$(KDIR)/image-$$(firstword $$(DEVICE_DTS)).dtb
