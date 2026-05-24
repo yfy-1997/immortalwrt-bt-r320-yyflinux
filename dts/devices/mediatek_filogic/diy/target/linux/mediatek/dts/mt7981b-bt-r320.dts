@@ -13,7 +13,7 @@
 / {
 	model = "BT-R320";
 	compatible = "bt,r320", "mediatek,mt7981";
-  
+
   // 定义别名，方便其他节点引用
 	aliases {
 		serial0 = &uart0;
@@ -25,19 +25,19 @@
 		led-upgrade = &status_blue_led;  // 系统升级时亮蓝灯
 	};
 
-  // 存放由 Bootloader（如 U-Boot）传递给内核的参数
+	// 存放由 Bootloader（如 U-Boot）传递给内核的参数
 	chosen {
 		bootargs = "root=PARTLABEL=rootfs rootwait";
 		stdout-path = "serial0:115200n8";
 	};
-  
-  // 定义物理内存信息
+
+	// 定义物理内存信息
 	memory {
     // 这里表示内存从 0x40000000 开始，大小为 0x40000000（即 1GB）
 		reg = <0 0x40000000 0 0x40000000>;
 	};
 
-  // 定义 GPIO 按键（物理按钮）
+	// 定义 GPIO 按键（物理按钮）
 	gpio-keys {
 		compatible = "gpio-keys";
 
@@ -56,37 +56,34 @@
 		};
 	};
 
-  // 定义 GPIO LED（指示灯）
+	// 定义 GPIO LED（指示灯）
 	gpio-leds {
 		compatible = "gpio-leds";
 
-         // 红色状态灯
-         status_red_led: led-0 {
-             label = "red:status";
-             gpios = <&pio 10 GPIO_ACTIVE_LOW>; // 绑定到 GPIO 10 号引脚
-         };
-
-         // 绿色状态灯
-         status_green_led: led-1 {
-             label = "green:status";
-             gpios = <&pio 11 GPIO_ACTIVE_LOW>; // 绑定到 GPIO 11 号引脚
-         };
-
-         // 蓝色状态灯
-         status_blue_led: led-2 {
-             label = "blue:status";
-             gpios = <&pio 12 GPIO_ACTIVE_LOW>; // 绑定到 GPIO 12 号引脚
-	     };
+		// 红色状态灯
+		status_red_led: led-0 {
+			label = "red:status";
+			gpios = <&pio 10 GPIO_ACTIVE_LOW>; // 绑定到 GPIO 10 号引脚
+		};
+		// 绿色状态灯
+		status_green_led: led-1 {
+			label = "green:status";
+			gpios = <&pio 11 GPIO_ACTIVE_LOW>; // 绑定到 GPIO 11 号引脚
+		};
+		// 蓝色状态灯
+		status_blue_led: led-2 {
+			label = "blue:status";
+			gpios = <&pio 12 GPIO_ACTIVE_LOW>; // 绑定到 GPIO 12 号引脚
+		};
 
         // 2.4G WiFi 指示灯 LED 颜色为绿色
-		wlan2g_led: led-0 {
+		wlan2g_led: led-3 {
 			function = LED_FUNCTION_WLAN_2GHZ;
 			color = <LED_COLOR_ID_GREEN>;
 			gpios = <&pio 34 GPIO_ACTIVE_LOW>;
 		};
-
         // 5G WiFi 指示灯 LED 颜色为绿色
-		wlan5g_led: led-1 {
+		wlan5g_led: led-4 {
 			function = LED_FUNCTION_WLAN_5GHZ;
 			color = <LED_COLOR_ID_GREEN>;
 			gpios = <&pio 35 GPIO_ACTIVE_LOW>;
