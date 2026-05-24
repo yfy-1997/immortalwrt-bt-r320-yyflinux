@@ -42,6 +42,7 @@ define Device/bt_r320
   # append-metadata: 在固件末尾追加元数据（如设备型号、版本等），用于刷机时的合法性校验，防止刷错设备变砖
   IMAGE/sysupgrade.bin := sysupgrade-tar | append-metadata
 # 设备定义结束
+endef
 
 # 将 bt_r320 这个设备加入到最终的编译目标列表中
 # 只有这样，在执行 make menuconfig 时才能在 Target Images 中找到并勾选这台设备
