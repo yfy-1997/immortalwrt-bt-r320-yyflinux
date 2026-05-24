@@ -11,7 +11,7 @@
 #include "mt7981b.dtsi"
 
 / {
-	model = "BT R320";
+	model = "BT-R320";
 	compatible = "bt,r320", "mediatek,mt7981";
   
   // 定义别名，方便其他节点引用
@@ -74,6 +74,7 @@
 // 引用并配置以太网控制器节点（&eth 定义在 mt7981b.dtsi 中）
 &eth {
 	status = "okay";
+	// 配置第一个 MAC 控制器（通常用于连接外部 PHY 或 Switch 的 CPU 端口）
 	gmac0: mac@0 {
 		compatible = "mediatek,eth-mac";
 		reg = <0>;
@@ -85,8 +86,9 @@
 			full-duplex;
 			pause;
 		};
-	};	
-		gmac1: mac@1 {
+	};
+	// 配置第二个 MAC 控制器
+	gmac1: mac@1 {
 		compatible = "mediatek,eth-mac";
 		reg = <1>;
 		phy-mode = "gmii";
