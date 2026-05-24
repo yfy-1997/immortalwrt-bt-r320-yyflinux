@@ -1,13 +1,23 @@
-
+#!/bin/sh
+# 引入 OpenWrt 系统自带的通用函数库
 . /lib/functions.sh
+# 引入 UCI 默认配置函数库，用于写入网络接口的配置文件
 . /lib/functions/uci-defaults.sh
+# 引入系统底层函数库，包含读取分区、MAC地址等底层操作的工具
 . /lib/functions/system.sh
 
+# ============================================================
+# 定义网络接口初始化函数
+# 作用：根据设备型号，自动划分 LAN 口和 WAN 口
+# ============================================================
 mediatek_setup_interfaces()
 {
+	# 接收传入的参数，即当前设备的型号名称
 	local board="$1"
 
+	# 根据设备型号（$board）进入不同的配置分支
 	case $board in
+	# 第一批设备：将 lan1、lan2、lan3 划分为 LAN 口，eth1 划分为 WAN 口
 	abt,asr3000|\
 	cmcc,rax3000m*|\
 	cmcc,rax3000me|\
@@ -24,23 +34,28 @@ mediatek_setup_interfaces()
 	zbtlink,zbt-z8103ax)
 		ucidef_set_interfaces_lan_wan "lan1 lan2 lan3" eth1
 		;;
-	acelink,ew-7886cax)
-		ucidef_set_interface_lan "eth0" "dhcp"
-		;;
+	# acelink ew-7886cax：将 eth0 设为 LAN 口，并默认使用 DHCP 获取 IP
 	acer,predator-w6|\
 	acer,predator-w6d)
-		ucidef_set_interfaces_lan_wan "lan1 lan2 lan3 game" eth1
+		ucidef_set_interface_lan "eth0" "dhcp"
 		;;
+	# 宏碁 Predator W6/W6D：lan1-lan3 加 game 口为 LAN，eth1 为 WAN
 	acer,vero-w6m)
 		ucidef_set_interfaces_lan_wan "lan1 lan2 lan3" internet
 		;;
+	# Arcadyan Mozart：lan0 和 eth1 为 LAN，eth2 为 WAN
 	arcadyan,mozart)
 		ucidef_set_interfaces_lan_wan "lan0 eth1" eth2
 		;;
+	# 华视飞 wh3000-pro 及 Airpi 系列：将 eth0 和 eth1 都划为 LAN 口（通常作为纯 AP 或交换机使用）
 	huasifei,wh3000-pro|\
 	*Airpi*)
                 ucidef_set_interfaces_lan "eth0 eth1"
 		;;
+	# ============================================================
+	# 第二批设备（包含你关注的 BT-R320）：
+	# 将 lan1、lan2、lan3 划分为 LAN 口，wan 接口划分为 WAN 口
+	# ============================================================
 	asus,rt-ax52|\
 	asus,rt-ax59u|\
 	cetron,ct3003|\
@@ -61,6 +76,7 @@ mediatek_setup_interfaces()
 	routerich,ax3000-ubootmod)
 		ucidef_set_interfaces_lan_wan "lan1 lan2 lan3" wan
 		;;
+	# 第三批设备（如华硕 TUF-AX4200 等）：拥有4个 LAN 口，eth1 为 WAN
 	asus,tuf-ax4200|\
 	jdcloud,re-cp-03|\
 	mediatek,mt7981-rfb|\
@@ -73,6 +89,7 @@ mediatek_setup_interfaces()
 	zyxel,ex5601-t0-ubootmod)
 		ucidef_set_interfaces_lan_wan "lan1 lan2 lan3 lan4" eth1
 		;;
+	# 华硕 TUF-AX6000 等高端机型：拥有5个 LAN 口
 	asus,tuf-ax6000|\
 	glinet,gl-mt6000|\
 	tplink,tl-xdr4288|\
@@ -80,21 +97,22 @@ mediatek_setup_interfaces()
 	tplink,tl-xtr8488)
 		ucidef_set_interfaces_lan_wan "lan1 lan2 lan3 lan4 lan5" eth1
 		;;
+	# 香蕉派 BPI-R3：带有 SFP 光口，将其也划入 LAN
 	bananapi,bpi-r3)
 		ucidef_set_interfaces_lan_wan "lan1 lan2 lan3 lan4 sfp2" "eth1 wan"
 		;;
+	# 香蕉派 R3-mini、Edgecore 等：简单的 eth0 为 LAN，eth1 为 WAN
 	bananapi,bpi-r3-mini|\
 	edgecore,eap111|\
 	huasifei,wh3000-emmc)
 		ucidef_set_interfaces_lan_wan eth0 eth1
 		;;
+	# 香蕉派 BPI-R4：多网口复杂配置
 	bananapi,bpi-r4|\
 	bananapi,bpi-r4-poe)
 		ucidef_set_interfaces_lan_wan "lan1 lan2 lan3 eth1" "wan eth2"
 		;;
-	comfast,cf-e393ax)
-		ucidef_set_interfaces_lan_wan "lan1" eth1
-		;;
+	# Cudy AP3000 等 AP 模式设备：仅配置 eth0 为 LAN
 	cudy,ap3000outdoor-v1|\
 	cudy,ap3000-v1|\
 	cudy,re3000-v1|\
@@ -104,6 +122,7 @@ mediatek_setup_interfaces()
 	zyxel,nwa50ax-pro)
 		ucidef_set_interface_lan "eth0"
 		;;
+	# Cudy M3000、GL.iNet 等：eth1 为 LAN，eth0 为 WAN（物理网口顺序与其他设备相反）
 	cudy,m3000-v1|\
 	cudy,tr3000-v1|\
 	cudy,tr3000-v1-ubootmod|\
@@ -117,10 +136,12 @@ mediatek_setup_interfaces()
 	openfi,6c*)
 		ucidef_set_interfaces_lan_wan "eth1" eth0
 		;;
+	# D-Link Aquila Pro AI 系列
 	dlink,aquila-pro-ai-m30-a1|\
 	dlink,aquila-pro-ai-m60-a1)
 		ucidef_set_interfaces_lan_wan "lan1 lan2 lan3 lan4" internet
 		;;
+	# Keenetic、Smartrg 等：简单的 lan 为 LAN，wan 为 WAN
 	keenetic,kn-3911|\
 	smartrg,sdg-8622|\
 	smartrg,sdg-8632|\
@@ -128,6 +149,7 @@ mediatek_setup_interfaces()
 	yuncore,ax835)
 		ucidef_set_interfaces_lan_wan lan wan
 		;;
+	# 联发科官方参考板配置
 	mediatek,mt7986a-rfb)
 		ucidef_set_interfaces_lan_wan "lan1 lan2 lan3 lan4 lan6" "eth1 wan"
 		;;
@@ -137,18 +159,22 @@ mediatek_setup_interfaces()
 	mediatek,mt7988a-rfb)
 		ucidef_set_interfaces_lan_wan "lan0 lan1 lan2 lan3 eth2" eth1
 		;;
+	# Mercusys MR90X：lan0-lan2 为 LAN
 	mercusys,mr90x-v1|\
 	mercusys,mr90x-v1-ubi)
 		ucidef_set_interfaces_lan_wan "lan0 lan1 lan2" eth1
 		;;
+	# 联发科 7981r128、TP-Link XDR6086 等：仅有两个 LAN 口
 	mediatek,7981r128|\
 	tplink,tl-xdr6086|\
 	wavlink,wl-wn586x3)
 		ucidef_set_interfaces_lan_wan "lan1 lan2" eth1
 		;;
+	# TP-Link RE6000XD：将两个网口和一个无线接口桥接为 LAN
 	tplink,re6000xd)
 		ucidef_set_interface_lan "lan1 lan2 eth1"
 		;;
+	# WirelessTag 系列
 	wirelesstag,zx7981pd|\
 	wirelesstag,zx7981pd-ubootmod)
 		ucidef_set_interfaces_lan_wan "lan1 lan2" wan
@@ -156,6 +182,7 @@ mediatek_setup_interfaces()
 	wirelesstag,zx7981pg)
 		ucidef_set_interfaces_lan_wan "lan1 lan2" wan
 		;;
+	# 小米系列（AX3000T, WR30U, AX6000）：lan2-lan4 为 LAN，wan 为 WAN
 	xiaomi,mi-router-ax3000t|\
 	xiaomi,mi-router-ax3000t-ubootmod|\
 	xiaomi,mi-router-wr30u-stock|\
@@ -164,79 +191,99 @@ mediatek_setup_interfaces()
 	xiaomi,redmi-router-ax6000-ubootmod)
 		ucidef_set_interfaces_lan_wan "lan2 lan3 lan4" wan
 		;;
+	# YVR X6
 	yvr,x6)
 		ucidef_set_interfaces_lan_wan "lan1 lan2 lan3" wan
 		;;
+	# 默认配置：如果以上型号都没匹配到，则默认分配 4 个 LAN 口和 1 个 WAN 口
 	*)
 		ucidef_set_interfaces_lan_wan "lan1 lan2 lan3 lan4" wan
 		;;
 	esac
 }
 
+# ============================================================
+# 定义 MAC 地址初始化函数
+# 作用：读取设备出厂 MAC 地址，并按规则分配给 LAN、WAN 和 WiFi
+# ============================================================
 mediatek_setup_macs()
 {
 	local board="$1"
+	# 定义局部变量，用于暂存读取到的 MAC 地址
 	local lan_mac=""
 	local wan_mac=""
 	local label_mac=""
 	local wifi_mac=""
+	
 	case $board in
+	# 宏碁系列：从 U-Boot 环境变量中读取 ASCII 格式的 MAC 地址
 	acer,predator-w6|\
 	acer,predator-w6d|\
 	acer,vero-w6m)
 		wan_mac=$(mmc_get_mac_ascii u-boot-env WANMAC)
 		lan_mac=$(mmc_get_mac_ascii u-boot-env LANMAC)
 		;;
+	# Cudy TR3000：从 bdinfo 分区读取，LAN 地址在 WAN 基础上加 1
 	cudy,tr3000-v1)
 		wan_mac=$(mtd_get_mac_binary bdinfo 0xde00)
                 lan_mac=$(macaddr_add "$wan_mac" 1)
 		;;
+	# 香蕉派系列：基于 eth0 的当前地址，WAN 地址加 1
 	bananapi,bpi-r3|\
 	bananapi,bpi-r3-mini|\
 	bananapi,bpi-r4)
 		wan_mac=$(macaddr_add $(cat /sys/class/net/eth0/address) 1)
 		;;
+	# H3C NX30 Pro：从 pdt_data_1 分区读取
 	h3c,magic-nx30-pro|\
 	h3c,magic-nx30-pro-nmbm)
 		wan_mac=$(mtd_get_mac_ascii pdt_data_1 ethaddr)
 		lan_mac=$(macaddr_add "$wan_mac" 1)
 		label_mac=$wan_mac
 		;;
+	# Mercusys MR80X：从临时文件读取并清洗 MAC 地址格式
 	mercusys,mr80x-v3)
 		mac_dirty=$(cat "/tmp/tp_data/default-mac" | sed -n 's/^'"MAC"'://p')
 		label_mac=$(macaddr_canonicalize "$mac_dirty")
 		lan_mac=$label_mac
 		wan_mac=$(macaddr_add "$lan_mac" 1)
 		;;
+	# Mercusys MR90X 和 TP-Link RE6000XD
 	mercusys,mr90x-v1|\
 	tplink,re6000xd)
 		label_mac=$(get_mac_binary "/tmp/tp_data/default-mac" 0)
 		lan_mac=$label_mac
 		;;
+	# 网件 WAX220
 	netgear,wax220)
 		lan_mac=$(mtd_get_mac_ascii u-boot-env mac)
 		label_mac=$lan_mac
 		;;
+	# 360 T7：从 factory 分区读取 LAN MAC，WAN MAC 加 1
 	qihoo,360t7)
 		lan_mac=$(mtd_get_mac_ascii factory lanMac)
 		wan_mac=$(macaddr_add "$lan_mac" 1)
 		label_mac=$wan_mac
 		;;
+	# 锐捷 X60 Pro
 	ruijie,rg-x60-pro)
 		label_mac=$(mtd_get_mac_ascii product_info ethaddr)
 		wan_mac=$label_mac
 		lan_mac=$(macaddr_add "$label_mac" 1)
 		;;
+	# YVR X6
 	yvr,x6)
 		wan_mac=$(mtd_get_mac_ascii Factory_info MAC)
 		lan_mac=$(macaddr_add $wan_mac 1)
 		label_mac=$lan_mac
 		;;
+	# SL 3000 eMMC：从 factory 分区读取，WAN 地址减 2
         sl,3000-emmc)
  		lan_mac=$(mmc_get_mac_binary factory 0x04)		
  		wan_mac=$(macaddr_add "$lan_mac" -2)
  		label_mac=$lan_mac
  		;;
+	# 小米系列：从 Bdata 分区读取 WAN MAC
 	xiaomi,mi-router-ax3000t|\
 	xiaomi,mi-router-ax3000t-ubootmod|\
 	xiaomi,mi-router-wr30u-stock|\
@@ -246,49 +293,69 @@ mediatek_setup_macs()
 		wan_mac=$(mtd_get_mac_ascii Bdata ethaddr_wan)
 		label_mac=$wan_mac
 		;;
+	# UMI UAX3000E
 	umi,uax3000e)
 		lan_mac=$(mmc_get_mac_binary factory 0x2A)
 		wan_mac=$(mmc_get_mac_binary factory 0x04)
 		;;
+	# 云核 AX835
 	yuncore,ax835)
 		label_mac=$(mtd_get_mac_binary "Factory" 0x4)
 		;;
+	# OpenFi 6C 系列
 	openfi,6c*)
 		lan_mac=$(macaddr_add $(cat /sys/class/net/eth1/address) 1)
 		;;
+	# WirelessTag 系列：从 wtinfo 分区读取
 	wirelesstag,zx7981pd|\
 	wirelesstag,zx7981pd-ubootmod)
 		label_mac=$(mtd_get_mac_binary wtinfo 10)
 		lan_mac=$label_mac
 		wan_mac=$(macaddr_add "$label_mac" 1)
 		;;
+	# 联发科官方参考板
 	mediatek,7981r128)
 		local label_mac=$(mtd_get_mac_binary Factory 0x4)
 		lan_mac=$(macaddr_add $label_mac 1)
 		wan_mac=$(macaddr_add $label_mac -1)
 		;;
 	esac
-		
+	
+	# ============================================================
+	# 统一配置 WiFi 的 MAC 地址
+	# 逻辑：基于 eth0 的物理地址，分别加 3 和加 4 分配给 2.4G 和 5G WiFi
+	# ============================================================
 	wifi_mac=$(macaddr_add $(cat /sys/class/net/eth0/address) 3)
+        # 清理旧的 MAC 地址配置，并写入新的 2.4G MAC 地址
         sed -i '/MacAddress=$wifi_mac/d' /etc/wireless/mediatek/mt7981.dbdc.b0.dat
         echo "MacAddress=$wifi_mac" >> /etc/wireless/mediatek/mt7981.dbdc.b0.dat
+        
         wifi_mac=$(macaddr_add $(cat /sys/class/net/eth0/address) 4)
+        # 清理旧的 MAC 地址配置，并写入新的 5G MAC 地址
         sed -i '/MacAddress=$wifi_mac/d' /etc/wireless/mediatek/mt7981.dbdc.b1.dat
         echo "MacAddress=$wifi_mac" >> /etc/wireless/mediatek/mt7981.dbdc.b1.dat
+        
+        # 以下是针对 MT7986 芯片（如 AX6000）的 WiFi MAC 配置
 	sed -i '/MacAddress=$wifi_mac/d' /etc/wireless/mediatek/mt7986-ax60000.dbdc.b0.dat
         echo "MacAddress=$wifi_mac" >> /etc/wireless/mediatek/mt7986-ax6000.dbdc.b0.dat
 	wifi_mac="$(macaddr_add $wifi_mac 1)"
         sed -i '/MacAddress=$wifi_mac/d' /etc/wireless/mediatek/mt7986-ax6000.dbdc.b1.dat
         echo "MacAddress=$wifi_mac" >> /etc/wireless/mediatek/mt7986-ax6000.dbdc.b1.dat
+
+	# 如果前面读取到了有效的 MAC 地址，则通过 UCI 命令写入系统网络配置
 	[ -n "$lan_mac" ] && ucidef_set_interface_macaddr "lan" $lan_mac
 	[ -n "$wan_mac" ] && ucidef_set_interface_macaddr "wan" $wan_mac
 	[ -n "$label_mac" ] && ucidef_set_label_macaddr $label_mac
 }
 
+# 开始更新板级配置
 board_config_update
+# 获取当前设备型号
 board=$(board_name)
+# 调用上面定义的两个函数，分别执行网络接口划分和 MAC 地址配置
 mediatek_setup_interfaces $board
 mediatek_setup_macs $board
+# 刷新并保存配置到 /etc/config/network 等文件中
 board_config_flush
 
 exit 0
