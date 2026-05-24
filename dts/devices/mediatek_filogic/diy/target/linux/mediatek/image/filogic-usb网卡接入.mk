@@ -10,11 +10,15 @@ define Device/bt_r320
   # 指定设备树文件所在的目录路径（相对于当前 Makefile 的路径）
   DEVICE_DTS_DIR := ../dts
   
-  # 定义该设备固件中预装的软件包（驱动、工具、插件等）
-  DEVICE_PACKAGES := kmod-mt7915e kmod-mt7981-firmware mt7981-wo-firmware \	# WiFi 6 核心驱动、闭源固件以及降低 CPU 占用的无线流量分流(Offload)固件
-           kmod-usb-serial-option kmod-usb-net-cdc-ether kmod-usb-net-qmi-wwan \	# 4G/5G 上网卡的底层串口、标准网卡模拟及高性能 QMI 协议驱动
-           kmod-usb3 kmod-mmc kmod-fs-f2fs blockdev automount \	# USB 3.0 接口驱动、eMMC 存储控制器、F2FS 闪存文件系统、块设备工具及自动挂载
-           luci-proto-qmi luci-proto-ncm	# LuCI 网页后台的 QMI 和 NCM 蜂窝网络协议配置界面插件
+  # DEVICE_PACKAGES 定义以下软件包：
+  # - WiFi 6 核心驱动、闭源固件及无线流量分流固件
+  # - 4G/5G 上网卡驱动
+  # - USB 3.0、eMMC、F2FS、块设备工具及自动挂载
+  # - LuCI 网页配置界面插件
+  DEVICE_PACKAGES := kmod-mt7915e kmod-mt7981-firmware mt7981-wo-firmware \
+	  kmod-usb-serial-option kmod-usb-net-cdc-ether kmod-usb-net-qmi-wwan \
+	  kmod-usb3 kmod-mmc kmod-fs-f2fs blockdev automount \
+	  luci-proto-qmi luci-proto-ncm
 
   # --- 以下是 eMMC 引导文件生成配置 ---
   # 声明编译后需要输出的 eMMC 引导相关文件
